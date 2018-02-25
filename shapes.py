@@ -89,29 +89,3 @@ class Shape(object):
             result.set_x(i, -self.y(i))
             result.set_y(i, self.x(i))
         return result
-
-    '''
-    def rotate_left(self, data_for_rotate):
-        if self.piece_shape == Pentominoes.XShape:
-            return self
-        result = Shape()
-        result.piece_shape = self.piece_shape
-        if data_for_rotate is not None:
-            self.coords = data_for_rotate
-        return result
-
-    '''
-    def rotate_clockwise(self, shape):
-        return [[shape[y][x] for y in range(len(shape))]
-                for x in range(len(shape[0]) - 1, -1, -1)]
-
-    def check_collision(self, board, shape, offset):
-        off_x, off_y = offset
-        for cy, row in enumerate(shape):
-            for cx, cell in enumerate(row):
-                try:
-                    if cell and board[cy + off_y][cx + off_x]:
-                        return True
-                except IndexError:
-                    return True
-        return False

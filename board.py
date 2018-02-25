@@ -79,8 +79,7 @@ class Board(QFrame):
         elif key == Qt.Key_Down:
             self.game.one_line_down()
         elif key == Qt.Key_Up:
-            self.game.try_rotate_left()
-            self.game.try_move(self.game.current_piece,
+            self.game.try_move(self.game.current_piece.rotate_left(),
                                self.game.cur_x,
                                self.game.cur_y)
         elif key == Qt.Key_Space:
