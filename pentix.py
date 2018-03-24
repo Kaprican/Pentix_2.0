@@ -100,7 +100,7 @@ def convert_board_to_str(board, width):
             line.append(alph[item])
         if (i + 1) % width == 0 and i != 0:
             lines.append(''.join(line))
-            line = []
+            line = list()
     return '\n'.join(reversed(lines))
 
 
@@ -143,12 +143,22 @@ def read_records():
             string = f.read()
     except FileNotFoundError as e:  # IOError:
         return []
-    return convert_str_to_records_list(string)
+    try:
+        list_of_records = convert_str_to_records_list(string)
+    except ValueError:
+        return []
+    return list_of_records
 
 
 def convert_str_to_records_list(string):
+    if not string:
+        return []
     lines = string.split("\n")
-    return list(map(int, lines))
+    try:
+        records = list(map(int, lines))
+    except ValueError:
+        raise ValueError('Invalid arguments')
+    return records
 
 
 class Pentix(QMainWindow):
@@ -201,15 +211,6 @@ class Pentix(QMainWindow):
         self.setWindowIcon(QIcon('images\icon.png'))
         self.show()
 
-        '''
-    def make_layout(self):
-        self.board.move(10, 10)
-        self.next_figure.move(10 + self.board.width + 10, 10)
-        self.score.move(10 + self.board.width + 10, 20 + self.next_figure.height)
-        self.points.move(10 + self.board.width + 10, 100 + self.next_figure.height)
-        self.best_score.move(10 + self.board.width + 10, 150 + self.next_figure.height)
-        '''
-
     def make_layout(self):
 
         _layout = QGridLayout()
@@ -220,23 +221,9 @@ class Pentix(QMainWindow):
         _layout.addWidget(self.points, 3, 3)
         _layout.addWidget(self.best_score, 4, 3)
 
-        '''
-        self._sel_layout = QtWidgets.QVBoxLayout()
-        self._sel_layout.addWidget(self.next_figure)
-        self._sel_layout.addWidget(self.score)
-        self._sel_layout.addWidget(self.points)
-        self._sel_layout.addWidget(self.best_score)
-        self._layout = QtWidgets.QHBoxLayout()
-        self._layout.addWidget(self.board)
-        self._layout.addLayout(self._sel_layout)
-        '''
         return _layout
 
     def create_menu(self):
-        self.exit_action = QAction('Exit', self)
-        self.exit_action.setShortcut('Ctrl+Q')
-        self.exit_action.setStatusTip('Exit application')
-        self.exit_action.triggered.connect(qApp.quit)
 
         self.restart_action = QAction(QIcon('images/restart'), 'Rest', self)
         self.restart_action.setShortcut('Ctrl+R')
@@ -262,7 +249,6 @@ class Pentix(QMainWindow):
         self.menu.addAction(self.save_action)
         self.menu.addAction(self.open_action)
         self.menu.addAction(self.score_action)
-        self.menu.addAction(self.exit_action)
 
     def center(self):
         qr = self.frameGeometry()
@@ -327,6 +313,7 @@ class Pentix(QMainWindow):
                                      "Are you sure to quit?", QMessageBox.Yes |
                                      QMessageBox.No, QMessageBox.No)
         if reply == QMessageBox.Yes:
+            self.highscores = update_records(self.highscores, self.game.score)
             event.accept()
         else:
             event.ignore()

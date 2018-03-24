@@ -38,9 +38,6 @@ class Shape(object):
                 self.coords[i][j] = table[i][j]
         self.piece_shape = shape
 
-    def set_new_shape(self):
-        pass
-
     def set_random_shape(self):
         self.set_shape(random.randint(1, 12))
 

@@ -16,6 +16,7 @@ class Game:
         self.is_paused = False
         self.next_piece = Shape()
         self.current_piece = Shape()
+        self.shapes_on_lath = set()
         self.next_piece.set_random_shape()
 
         self.score = score
@@ -41,7 +42,7 @@ class Game:
     def start(self):
         if self.is_paused:
             return
-        self.clear_board()
+        # self.clear_board()
         self.new_piece()
 
     def pause(self):
@@ -64,10 +65,14 @@ class Game:
             self.piece_dropped()
 
     def piece_dropped(self):
+        on_lath = False
         for i in range(5):
             x = self.cur_x + self.current_piece.x(i)
             y = self.cur_y - self.current_piece.y(i)
             self.set_shape_at(x, y, self.current_piece.shape())
+            on_lath = on_lath or self.is_on_lath(x, y - 1) or ((x, y - 1) in self.shapes_on_lath)
+        if on_lath:
+            self.add_shape_above_lath(self.current_piece)
         self.remove_full_lines()
         self.new_piece()
 
@@ -85,9 +90,12 @@ class Game:
         rows_to_remove.reverse()
 
         for m in rows_to_remove:
-            for k in range(m, self.height):
+            for k in range(m, self.height - 1):
                 for l in range(self.width):
-                        self.set_shape_at(l, k, self.shape_at(l, k + 1))
+                    if (l, k + 1) in self.shapes_on_lath or \
+                                    (l, k) in self.shapes_on_lath:
+                        continue
+                    self.set_shape_at(l, k, self.shape_at(l, k + 1))
         num_full_lines += len(rows_to_remove)
         if num_full_lines > 0:
             self.score = self.score + num_full_lines * self.added_points
@@ -99,6 +107,17 @@ class Game:
 
             # self.is_waiting_after_line = True
             self.current_piece.set_shape(Pentominoes.NoShape)
+
+    def is_on_lath(self, x, y):
+        a = (y == (self.height // 2 - 1) and
+                            self.width // 3 < x < (self.width // 3 * 2))
+        return a
+
+    def add_shape_above_lath(self, shape):
+        for i in range(5):
+            x = self.cur_x + shape.x(i)
+            y = self.cur_y - shape.y(i)
+            self.shapes_on_lath.add((x, y))
 
     def new_piece(self):
         self.current_piece = self.next_piece
@@ -115,12 +134,7 @@ class Game:
         for i in range(5):
             x = new_x + new_piece.x(i)
             y = new_y - new_piece.y(i)
-            if x < 0 or x >= self.width or y < 0 or y >= self.height:
-                return False
-            if self.shape_at(x, y) != Pentominoes.NoShape:
-                return False
-            if (y == (self.height // 2 - 1) and
-                    self.width // 3 < x < (self.width // 3 * 2)):
+            if not self.is_square_movable(x, y):
                 return False
 
         self.current_piece = new_piece
@@ -128,39 +142,11 @@ class Game:
         self.cur_y = new_y
         return True
 
-    def try_rotate_left(self):
-        data_for_rotate = self._check_rotate_left()
-        self.current_piece.rotate_left(data_for_rotate)
-        return self.current_piece
-
-    def _check_rotate_left(self):
-        min_y = self.height
-        min_x = self.width
-        for i in range(5):
-            if self.current_piece.y(i) < min_y:
-                min_y = self.current_piece.y(i)
-            if self.current_piece.x(i) < min_x:
-                min_x = self.current_piece.x(i)
-
-        new_min_y = self.height
-        new_min_x = self.width
-        new_coords = []
-        for i in range(5):
-            new_y = min_y - (self.current_piece.x(i) - min_x)
-            new_column = self.current_piece.y(i) - min_y + min_x
-
-            new_coords.append([new_column, new_y])
-
-            if new_y < new_min_y:
-                new_min_y = new_y
-            if new_column < new_min_x:
-                new_min_x = new_column
-
-        if new_min_y < min_y:
-            for new_coord in new_coords:
-                new_coord[1] += min_y - new_min_y
-        if new_min_x < min_x:
-            for new_coord in new_coords:
-                new_coord[0] += min_x - new_min_x
-
-        return new_coords
+    def is_square_movable(self, x, y):
+        if x < 0 or x >= self.width or y < 0 or y >= self.height:
+            return False
+        if self.shape_at(x, y) != Pentominoes.NoShape:
+            return False
+        if self.is_on_lath(x, y):
+            return False
+        return True

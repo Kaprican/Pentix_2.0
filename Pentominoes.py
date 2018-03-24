@@ -1,3 +1,4 @@
+
 class Pentominoes(object):
 
     NoShape = 0
